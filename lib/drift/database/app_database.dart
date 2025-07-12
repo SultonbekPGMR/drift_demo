@@ -24,6 +24,9 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dir = await getApplicationDocumentsDirectory();
     final file = File(p.join(dir.path, 'todo.db'));
+    if (await file.exists()) {
+      await file.delete();
+    }
     return NativeDatabase(file);
   });
 }

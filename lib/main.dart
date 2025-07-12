@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
+import 'package:drift_demo/paginated_todo_screen.dart';
 import 'package:flutter/material.dart';
 
+import 'drift/dao/todo_dao.dart';
 import 'drift/database/app_database.dart';
 
 void main() {
@@ -17,7 +19,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const Home(title: 'Flutter Drift'),
+      // home: const Home(title: 'Flutter Drift'),
+      home: PaginatedTodoStreamScreen(),
     );
   }
 }
@@ -33,16 +36,37 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final db = AppDatabase.instance;
+  final todoDao = TodoDao(AppDatabase.instance);
   int counter = 1;
   late Stream<List<TodoItem>> streamTodo;
 
   @override
   void initState() {
-    streamTodo = db.managers.todoItems.watch();
+    // streamTodo = db.managers.todoItems.watch();
+    streamTodo = todoDao.watchAllTodos();
     super.initState();
   }
 
   void _addTodo() async {
+    // dao
+    for (var i = 0; i < 100; i++) {
+      await todoDao.insertTodo(
+        TodoItemsCompanion(
+          title: Value('New Todo ${counter++}'),
+          description: Value('New Todo Description'),
+        ),
+      );
+    }
+    await todoDao.insertTodo(
+      TodoItemsCompanion(
+        title: Value('New Todo ${counter++}'),
+        description: Value('New Todo Description'),
+      ),
+    );
+
+
+    return;
+    // manager
     await db.managers.todoItems.create(
       (o) => o(
         title: 'New Todo ${counter++}',
@@ -52,10 +76,28 @@ class _HomeState extends State<Home> {
   }
 
   void _deleteTodo(TodoItem item) async {
+    // dao
+    await todoDao.deleteTodo(item.id);
+
+
+    return;
+    // manager
     await db.managers.todoItems.filter((f) => f.title(item.title)).delete();
   }
 
   void _updateTodo(TodoItem item) async {
+    // dao
+    await todoDao.updateTodo(
+      TodoItem(
+        id: item.id,
+        title: 'New Todo ${counter++}',
+        description: item.description,
+      ),
+    );
+
+
+    return;
+    // manager
     await db.managers.todoItems
         .filter((f) => f.title(item.title))
         .update((o) => o(title: Value('New Todo ${counter++}')));
